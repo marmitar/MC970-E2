@@ -6,6 +6,10 @@ find_package(OpenMP REQUIRED)
 
 set(CMAKE_C_STANDARD 99)
 
+# Enable Link Time Optimizations
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE CACHE BOOL "Enable LTO in Release")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE CACHE BOOL "Enable LTO in RelWithDebInfo")
+
 # 1 if the GCC is the current compiler
 set(GCC $<C_COMPILER_ID:GNU>)
 # 1 if the LLVM Clang is the current compiler
