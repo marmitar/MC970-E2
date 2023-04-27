@@ -1,50 +1,70 @@
-#include <omp.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <omp.h>
 
 #define SEED 123
 
 typedef int *restrict *matrix_t;
 typedef const int *const restrict *const const_matrix_t;
 
-static void free_matrix(matrix_t m, unsigned size) {
+static void free_matrix(matrix_t m, const unsigned size) {
   for (unsigned i = 0; i < size; i++) {
     free(m[i]);
   }
   free((void *)m);
 }
 
-static matrix_t mul(matrix_t restrict a, matrix_t restrict b, unsigned size) {
+static matrix_t cmul(const_matrix_t restrict a, const_matrix_t restrict b,
+                     const unsigned size) {
   matrix_t ret = malloc(size * sizeof(int *));
+  assert(ret != NULL);
+
   for (unsigned i = 0; i < size; i++) {
     ret[i] = calloc(size, sizeof(int));
+    assert(ret[i] != NULL);
+  }
+
+  for (unsigned i = 0; i < size; i++) {
     for (unsigned j = 0; j < size; j++) {
       for (unsigned k = 0; k < size; k++) {
         ret[i][j] += a[i][k] * b[k][j];
       }
     }
   }
+  return ret;
+}
 
+static matrix_t mul(matrix_t restrict a, matrix_t restrict b,
+                    const unsigned size) {
+  matrix_t ret = cmul((const_matrix_t)a, (const_matrix_t)b, size);
   free_matrix(a, size);
   free_matrix(b, size);
-
   return ret;
 }
 
 // Parallelise this function:
-static matrix_t array_mul(unsigned n, matrix_t restrict data[const n],
-                          unsigned size) {
+static matrix_t array_mul(const unsigned n, matrix_t restrict data[const n],
+                          const unsigned size) {
   matrix_t ret = data[0];
   for (unsigned i = 1; i < n; i++) {
     ret = mul(ret, data[i], size);
   }
+  free((void *)data);
   return ret;
 }
 
-static matrix_t rnd_matrix(unsigned size) {
+static matrix_t rnd_matrix(const unsigned size) {
   matrix_t ret = malloc(size * sizeof(int *));
+  assert(ret != NULL);
+
   for (unsigned i = 0; i < size; i++) {
     ret[i] = malloc(size * sizeof(int));
+    assert(ret[i] != NULL);
+  }
+
+  for (unsigned i = 0; i < size; i++) {
     for (unsigned j = 0; j < size; j++) {
       ret[i][j] = 2 * (rand() % 2) - 1; // Generates -1 or 1
     }
@@ -53,7 +73,7 @@ static matrix_t rnd_matrix(unsigned size) {
   return ret;
 }
 
-static void print_matrix(const_matrix_t m, unsigned size) {
+static void print_matrix(const_matrix_t m, const unsigned size) {
   for (unsigned i = 0; i < size; i++) {
     for (unsigned j = 0; j < size; j++) {
       printf("%d ", m[i][j]);
@@ -76,12 +96,14 @@ int main(const int argc, const char *const restrict argv[const argc]) {
 
   unsigned n = 0, size = 0;
   fscanf(input, "%u %u", &n, &size);
+  assert(n != 0 && size != 0);
   srand(SEED);
 
   // Do not change this line
   omp_set_num_threads(4);
 
   matrix_t *data = malloc(n * sizeof(int **));
+  assert(data != NULL);
   for (unsigned i = 0; i < n; i++) {
     data[i] = rnd_matrix(size);
   }
@@ -94,6 +116,5 @@ int main(const int argc, const char *const restrict argv[const argc]) {
   fprintf(stderr, "%lf\n", t);
 
   free_matrix(ret, size);
-  free(data);
   return EXIT_SUCCESS;
 }
