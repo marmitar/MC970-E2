@@ -7,11 +7,38 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#define COMMAND_LENGTH 400ULL
-#define LINE_BUF_SIZE 200ULL
+#define _STR(X) #X
+#define STR(X) _STR(X)
+
+#define INPUT_STR_SIZE 99
+
+// Read inputs from file
+static bool read_input(const char *restrict inputfile,
+                       int nthreads[static restrict 1],
+                       char strbuf[static restrict INPUT_STR_SIZE + 1]) {
+
+  FILE *input = fopen(inputfile, "r");
+  if (input == NULL) {
+    fprintf(stderr, "Error: could not open file\n");
+    return false;
+  }
+
+  // Read inputs
+  int sc_nthreads = fscanf(input, "%d", nthreads);
+  int sc_string = fscanf(input, "%" STR(INPUT_STR_SIZE) "s", strbuf);
+  fclose(input);
+
+  if (sc_nthreads != 1 && sc_string != 1) {
+    fprintf(stderr, "Error: inputs could not be read correctly\n");
+    return false;
+  }
+  return true;
+}
 
 // Test if password unlocks zip file
 static bool password_ok(const char *const filename, const unsigned password) {
+  const size_t COMMAND_LENGTH = 400;
+
   char cmd[COMMAND_LENGTH];
   snprintf(cmd, COMMAND_LENGTH, "unzip -P%u -t %s 2>&1", password, filename);
 
@@ -22,6 +49,7 @@ static bool password_ok(const char *const filename, const unsigned password) {
   }
 
   while (!feof(fp)) {
+    const int LINE_BUF_SIZE = 200;
     char ret[LINE_BUF_SIZE];
     if (fgets(ret, LINE_BUF_SIZE, fp) == NULL) {
       break;
@@ -45,17 +73,12 @@ int main(const int argc, const char *const restrict argv[argc]) {
     return EXIT_FAILURE;
   }
 
-  FILE *input = fopen(argv[1], "r");
-  if (input == NULL) {
-    fprintf(stderr, "Error: could not open file\n");
+  int nt = -1;
+  char filename[INPUT_STR_SIZE + 1] = "";
+  bool ok = read_input(argv[1], &nt, filename);
+  if (!ok) {
     return EXIT_FAILURE;
   }
-
-  // Read inputs
-  int nt;
-  fscanf(input, "%d", &nt);
-  char filename[100];
-  fscanf(input, "%s", filename);
 
   // Do not touch this line
   omp_set_num_threads(nt);
