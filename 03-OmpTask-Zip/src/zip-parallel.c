@@ -1,13 +1,44 @@
 #define _GNU_SOURCE
 #include <omp.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
 
+#define COMMAND_LENGTH 400ULL
+#define LINE_BUF_SIZE 200ULL
+
+// Test if password unlocks zip file
+static bool password_ok(const char *const filename, const unsigned password) {
+  char cmd[COMMAND_LENGTH];
+  snprintf(cmd, COMMAND_LENGTH, "unzip -P%u -t %s 2>&1", password, filename);
+
+  FILE *fp = popen(cmd, "r");
+  if (fp == NULL) {
+    fprintf(stderr, "Error: invalid unzip command\n");
+    return false;
+  }
+
+  while (!feof(fp)) {
+    char ret[LINE_BUF_SIZE];
+    if (fgets(ret, LINE_BUF_SIZE, fp) == NULL) {
+      break;
+    }
+
+    if (strcasestr(ret, "ok") != NULL) {
+      pclose(fp);
+      return true;
+    }
+  }
+
+  pclose(fp);
+  return false;
+}
+
 int main(const int argc, const char *const restrict argv[argc]) {
-  const int max_password_value = 500000;
+  const unsigned max_password_value = 500000;
 
   if (argc < 2) {
     fprintf(stderr, "Error: missing path to input file\n");
@@ -32,20 +63,11 @@ int main(const int argc, const char *const restrict argv[argc]) {
   double t = omp_get_wtime();
 
   // Parallelize this loop using tasks!
-  for (int i = 0; i < max_password_value; i++) {
-    char cmd[400];
-    sprintf((char *)&cmd, "unzip -P%d -t %s 2>&1", i, filename);
-
-    FILE *fp = popen(cmd, "r");
-    while (!feof(fp)) {
-      char ret[200];
-      fgets((char *)&ret, 200, fp);
-      if (strcasestr(ret, "ok") != NULL) {
-        printf("Password: %d\n", i);
-        i = 500000;
-      }
+  for (unsigned i = 0; i < max_password_value; i++) {
+    if (password_ok(filename, i)) {
+      printf("Password: %u\n", i);
+      break;
     }
-    pclose(fp);
   }
 
   t = omp_get_wtime() - t;
