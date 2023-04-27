@@ -1,6 +1,8 @@
 
 #include <assert.h>
+#include <limits.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,22 +50,39 @@ static void print_matrix(const unsigned size, const float c[size * size]) {
   }
 }
 
+// Read inputs from filename
+static bool read_input(const char *restrict filename, unsigned size[static
+restrict 1], unsigned seed[static restrict 1]) {
+  FILE *input = fopen(filename, "r");
+  if (input == NULL) {
+    fprintf(stderr, "Error: could not open file\n");
+    return false;
+  }
+
+  // Read inputs
+  int sc_size = fscanf(input, "%u", size);
+  int sc_seed = fscanf(input, "%u", seed);
+  fclose(input);
+
+  if (sc_size != 1 || sc_seed != 1) {
+    fprintf(stderr, "Error: inputs could not be read correctly\n");
+    return false;
+  }
+  return true;
+}
+
 int main(const int argc, const char *const restrict argv[argc]) {
   if (argc < 2) {
     fprintf(stderr, "Error: missing path to input file\n");
     return EXIT_FAILURE;
   }
 
-  FILE *input = fopen(argv[1], "r");
-  if (input == NULL) {
-    fprintf(stderr, "Error: could not open file\n");
+  // Read inputs
+  unsigned seed = 0, size = 0;
+  bool ok = read_input(argv[1], &size, &seed);
+  if (!ok) {
     return EXIT_FAILURE;
   }
-
-  // Read inputs
-  unsigned seed, size;
-  fscanf(input, "%u", &size);
-  fscanf(input, "%u", &seed);
 
   // Do not change this line
   omp_set_num_threads(4);
