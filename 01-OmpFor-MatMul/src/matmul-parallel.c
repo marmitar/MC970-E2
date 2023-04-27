@@ -8,8 +8,11 @@
 #include <omp.h>
 
 // Initialize matrices
-void initialize_matrices(float *a, float *b, float *c, unsigned size,
-                         unsigned seed) {
+static void initialize_matrices(const unsigned size,
+                                float a[restrict size * size],
+                                float b[restrict size * size],
+                                float c[restrict size * size],
+                                const unsigned seed) {
   srand(seed);
   for (int i = 0; i < size; ++i) {
     for (int j = 0; j < size; ++j) {
@@ -21,12 +24,12 @@ void initialize_matrices(float *a, float *b, float *c, unsigned size,
 }
 
 // Parallelize this function using OpenMP
-void multiply(float *a, float *b, float *c, unsigned size) {
-  float sum = 0.0;
-
+static void multiply(const unsigned size, const float a[restrict size * size],
+                     const float b[restrict size * size],
+                     float c[restrict size * size]) {
   for (int i = 0; i < size; ++i) {
     for (int j = 0; j < size; ++j) {
-      sum = 0.0;
+      float sum = 0.0;
       for (int k = 0; k < size; ++k) {
         sum = sum + a[i * size + k] * b[k * size + j];
       }
@@ -36,7 +39,7 @@ void multiply(float *a, float *b, float *c, unsigned size) {
 }
 
 // Output matrix to stdout
-void print_matrix(float *c, unsigned size) {
+static void print_matrix(const unsigned size, const float c[size * size]) {
   for (int i = 0; i < size; i++) {
     for (int j = 0; j < size; j++) {
       printf(" %5.1f", c[i * size + j]);
@@ -45,23 +48,20 @@ void print_matrix(float *c, unsigned size) {
   }
 }
 
-int main(int argc, char *argv[]) {
-  float *a, *b, *c;
-  unsigned seed, size;
-  double t;
-  FILE *input;
-
+int main(const int argc, const char *const restrict argv[argc]) {
   if (argc < 2) {
     fprintf(stderr, "Error: missing path to input file\n");
-    return 1;
+    return EXIT_FAILURE;
   }
 
-  if ((input = fopen(argv[1], "r")) == NULL) {
+  FILE *input = fopen(argv[1], "r");
+  if (input == NULL) {
     fprintf(stderr, "Error: could not open file\n");
-    return 1;
+    return EXIT_FAILURE;
   }
 
   // Read inputs
+  unsigned seed, size;
   fscanf(input, "%u", &size);
   fscanf(input, "%u", &seed);
 
@@ -69,20 +69,20 @@ int main(int argc, char *argv[]) {
   omp_set_num_threads(4);
 
   // Allocate matrices
-  a = (float *)malloc(sizeof(float) * size * size);
-  b = (float *)malloc(sizeof(float) * size * size);
-  c = (float *)malloc(sizeof(float) * size * size);
+  float *a = malloc(sizeof(float) * size * size);
+  float *b = malloc(sizeof(float) * size * size);
+  float *c = malloc(sizeof(float) * size * size);
 
   // initialize_matrices with random data
-  initialize_matrices(a, b, c, size, seed);
+  initialize_matrices(size, a, b, c, seed);
 
   // Multiply matrices
-  t = omp_get_wtime();
-  multiply(a, b, c, size);
+  double t = omp_get_wtime();
+  multiply(size, a, b, c);
   t = omp_get_wtime() - t;
 
   // Show result
-  print_matrix(c, size);
+  print_matrix(size, c);
 
   // Output elapsed time
   fprintf(stderr, "%lf\n", t);
