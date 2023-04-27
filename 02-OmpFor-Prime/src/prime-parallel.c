@@ -3,7 +3,7 @@
 
 #include <omp.h>
 
-static int prime_default(const int n);
+static unsigned prime_default(const unsigned n);
 
 int main(const int argc, const char *const restrict argv[argc]) {
   if (argc < 2) {
@@ -17,28 +17,28 @@ int main(const int argc, const char *const restrict argv[argc]) {
     return EXIT_FAILURE;
   }
 
-  const int n_lo = 1;
-  const int n_factor = 2;
+  const unsigned n_lo = 1;
+  const unsigned n_factor = 2;
 
   // Do not change this line
   omp_set_num_threads(4);
 
-  int n_hi;
-  fscanf(input, "%d", &n_hi);
+  unsigned n_hi;
+  fscanf(input, "%u", &n_hi);
   n_hi = 1 << n_hi;
 
   printf("                    \n");
   printf("         N     Pi(N)\n");
   printf("\n");
 
-  int n = n_lo;
+  unsigned n = n_lo;
 
   double t = omp_get_wtime();
 
   while (n <= n_hi) {
-    int primes = prime_default(n);
+    unsigned primes = prime_default(n);
 
-    printf("  %8d  %8d\n", n, primes);
+    printf("  %8u  %8u\n", n, primes);
 
     n = n * n_factor;
   }
@@ -66,13 +66,13 @@ int main(const int argc, const char *const restrict argv[argc]) {
     Input, the maximum number to check.
     Output, the number of prime numbers up to N.
 */
-static int prime_default(const int n) {
-  int total = 0;
+static unsigned prime_default(const unsigned n) {
+  unsigned total = 0;
 
-  for (int i = 2; i <= n; i++) {
-    int prime = 1;
+  for (unsigned i = 2; i <= n; i++) {
+    unsigned prime = 1;
 
-    for (int j = 2; j < i; j++) {
+    for (unsigned j = 2; j < i; j++) {
       if (i % j == 0) {
         prime = 0;
         break;
