@@ -1,35 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <omp.h>
 
-int main(int argc, char *argv[]);
-int prime_default(int n);
+static int prime_default(const int n);
 
-int main(int argc, char *argv[]) {
-  int n;
-  int n_factor;
-  int n_hi;
-  int n_lo;
-  int primes;
-  double t;
-  FILE *input;
-
+int main(const int argc, const char *const restrict argv[argc]) {
   if (argc < 2) {
     fprintf(stderr, "Error: missing path to input file\n");
-    return 1;
+    return EXIT_FAILURE;
   }
 
-  if ((input = fopen(argv[1], "r")) == NULL) {
+  FILE *input = fopen(argv[1], "r");
+  if (input == NULL) {
     fprintf(stderr, "Error: could not open file\n");
-    return 1;
+    return EXIT_FAILURE;
   }
 
-  n_lo = 1;
-  n_factor = 2;
+  const int n_lo = 1;
+  const int n_factor = 2;
 
- // Do not change this line
+  // Do not change this line
   omp_set_num_threads(4);
 
+  int n_hi;
   fscanf(input, "%d", &n_hi);
   n_hi = 1 << n_hi;
 
@@ -37,12 +31,12 @@ int main(int argc, char *argv[]) {
   printf("         N     Pi(N)\n");
   printf("\n");
 
-  n = n_lo;
+  int n = n_lo;
 
-  t = omp_get_wtime();
+  double t = omp_get_wtime();
 
   while (n <= n_hi) {
-    primes = prime_default(n);
+    int primes = prime_default(n);
 
     printf("  %8d  %8d\n", n, primes);
 
@@ -56,7 +50,7 @@ int main(int argc, char *argv[]) {
   */
   fprintf(stderr, "%lf\n", t);
 
-  return 0;
+  return EXIT_SUCCESS;
 }
 
 /*
@@ -72,16 +66,13 @@ int main(int argc, char *argv[]) {
     Input, the maximum number to check.
     Output, the number of prime numbers up to N.
 */
-int prime_default(int n) {
-  int i;
-  int j;
-  int prime;
+static int prime_default(const int n) {
   int total = 0;
 
-  for (i = 2; i <= n; i++) {
-    prime = 1;
+  for (int i = 2; i <= n; i++) {
+    int prime = 1;
 
-    for (j = 2; j < i; j++) {
+    for (int j = 2; j < i; j++) {
       if (i % j == 0) {
         prime = 0;
         break;
