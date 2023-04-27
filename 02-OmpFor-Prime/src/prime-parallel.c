@@ -1,3 +1,5 @@
+#include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -5,27 +7,42 @@
 
 static unsigned prime_default(const unsigned n);
 
+// Read exponent 'N' from file
+static unsigned read_exponent(const char *filename) {
+  FILE *input = fopen(filename, "r");
+  if (input == NULL) {
+    fprintf(stderr, "Error: could not open file\n");
+    return UINT_MAX;
+  }
+
+  unsigned exponent = UINT_MAX;
+  int rv = fscanf(input, "%u", &exponent);
+  fclose(input);
+
+  if (rv != 1) {
+    fprintf(stderr, "Error: inputs could not be read correctly\n");
+    return UINT_MAX;
+  }
+  return exponent;
+}
+
 int main(const int argc, const char *const restrict argv[argc]) {
   if (argc < 2) {
     fprintf(stderr, "Error: missing path to input file\n");
     return EXIT_FAILURE;
   }
 
-  FILE *input = fopen(argv[1], "r");
-  if (input == NULL) {
-    fprintf(stderr, "Error: could not open file\n");
+  const unsigned N = read_exponent(argv[1]);
+  if (N == UINT_MAX) {
     return EXIT_FAILURE;
   }
 
   const unsigned n_lo = 1;
   const unsigned n_factor = 2;
+  const unsigned n_hi = 1 << N;
 
   // Do not change this line
   omp_set_num_threads(4);
-
-  unsigned n_hi;
-  fscanf(input, "%u", &n_hi);
-  n_hi = 1 << n_hi;
 
   printf("                    \n");
   printf("         N     Pi(N)\n");
