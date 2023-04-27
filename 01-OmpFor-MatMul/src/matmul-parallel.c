@@ -14,10 +14,10 @@ static void initialize_matrices(const unsigned size,
                                 float c[restrict size * size],
                                 const unsigned seed) {
   srand(seed);
-  for (int i = 0; i < size; ++i) {
-    for (int j = 0; j < size; ++j) {
-      a[i * size + j] = rand() % 10;
-      b[i * size + j] = rand() % 10;
+  for (unsigned i = 0; i < size; ++i) {
+    for (unsigned j = 0; j < size; ++j) {
+      a[i * size + j] = (float)(rand() % 10);
+      b[i * size + j] = (float)(rand() % 10);
       c[i * size + j] = 0.0f;
     }
   }
@@ -27,10 +27,10 @@ static void initialize_matrices(const unsigned size,
 static void multiply(const unsigned size, const float a[restrict size * size],
                      const float b[restrict size * size],
                      float c[restrict size * size]) {
-  for (int i = 0; i < size; ++i) {
-    for (int j = 0; j < size; ++j) {
+  for (unsigned i = 0; i < size; ++i) {
+    for (unsigned j = 0; j < size; ++j) {
       float sum = 0.0;
-      for (int k = 0; k < size; ++k) {
+      for (unsigned k = 0; k < size; ++k) {
         sum = sum + a[i * size + k] * b[k * size + j];
       }
       c[i * size + j] = sum;
@@ -40,8 +40,8 @@ static void multiply(const unsigned size, const float a[restrict size * size],
 
 // Output matrix to stdout
 static void print_matrix(const unsigned size, const float c[size * size]) {
-  for (int i = 0; i < size; i++) {
-    for (int j = 0; j < size; j++) {
+  for (unsigned i = 0; i < size; i++) {
+    for (unsigned j = 0; j < size; j++) {
       printf(" %5.1f", c[i * size + j]);
     }
     printf("\n");
