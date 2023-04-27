@@ -50,9 +50,15 @@ static void print_matrix(const unsigned size, const float c[size * size]) {
   }
 }
 
+static bool overflows_uint(const size_t size, const size_t element_size) {
+  return (size > UINT_MAX) || (size > UINT_MAX / size) ||
+         (element_size > UINT_MAX) || (size * size > UINT_MAX / element_size);
+}
+
 // Read inputs from filename
-static bool read_input(const char *restrict filename, unsigned size[static
-restrict 1], unsigned seed[static restrict 1]) {
+static bool read_input(const char *restrict filename,
+                       unsigned size[static restrict 1],
+                       unsigned seed[static restrict 1]) {
   FILE *input = fopen(filename, "r");
   if (input == NULL) {
     fprintf(stderr, "Error: could not open file\n");
@@ -66,6 +72,11 @@ restrict 1], unsigned seed[static restrict 1]) {
 
   if (sc_size != 1 || sc_seed != 1) {
     fprintf(stderr, "Error: inputs could not be read correctly\n");
+    return false;
+  }
+
+  if (overflows_uint(*size, sizeof(float))) {
+    fprintf(stderr, "Error: size is too big, would overflow a unsingned int\n");
     return false;
   }
   return true;
@@ -91,6 +102,7 @@ int main(const int argc, const char *const restrict argv[argc]) {
   float *a = malloc(sizeof(float) * size * size);
   float *b = malloc(sizeof(float) * size * size);
   float *c = malloc(sizeof(float) * size * size);
+  assert(a != NULL && b != NULL && c != NULL);
 
   // initialize_matrices with random data
   initialize_matrices(size, a, b, c, seed);
