@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -82,21 +83,44 @@ static void print_matrix(const_matrix_t m, const unsigned size) {
   }
 }
 
+// Read sizes from file
+static bool read_input(const char *restrict filename,
+                       unsigned n[static restrict 1],
+                       unsigned size[static restrict 1]) {
+
+  FILE *input = fopen(filename, "r");
+  if (input == NULL) {
+    fprintf(stderr, "Error: could not open file\n");
+    return false;
+  }
+
+  // Read inputs
+  int sc_count = fscanf(input, "%u %u", n, size);
+  fclose(input);
+
+  if (sc_count != 2) {
+    fprintf(stderr, "Error: inputs could not be read correctly\n");
+    return false;
+  }
+  if (*n == 0 || *size == 0) {
+    fprintf(stderr, "Error: invalid zero-sized arrays\n");
+    return false;
+  }
+  return true;
+}
+
 int main(const int argc, const char *const restrict argv[const argc]) {
   if (argc < 2) {
     fprintf(stderr, "Error: missing path to input file!\n");
     return EXIT_FAILURE;
   }
 
-  FILE *input = fopen(argv[1], "r");
-  if (input == NULL) {
-    fprintf(stderr, "Error: could not open input file!\n");
+  unsigned n = 0, size = 0;
+  bool ok = read_input(argv[1], &n, &size);
+  if (!ok) {
     return EXIT_FAILURE;
   }
 
-  unsigned n = 0, size = 0;
-  fscanf(input, "%u %u", &n, &size);
-  assert(n != 0 && size != 0);
   srand(SEED);
 
   // Do not change this line
