@@ -31,9 +31,13 @@ add_compile_definitions($<$<CONFIG:RelWithDebInfo>:_FORTIFY_SOURCE=3>)
 
 add_executable(serial   src/prime-serial.c)
 add_executable(parallel src/prime-parallel.c)
+add_executable(optimized src/prime-optimized.c)
 
 target_link_libraries(serial
     PUBLIC OpenMP::OpenMP_C)
 
 target_link_libraries(parallel
+    PUBLIC OpenMP::OpenMP_C)
+
+target_link_libraries(optimized
     PUBLIC OpenMP::OpenMP_C)

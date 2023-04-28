@@ -40,9 +40,9 @@ static void multiply(const unsigned size, const float a[restrict size * size],
           sum = sum + a[i * size + k] * b[k * size + j];
         }
         c[i * size + j] = sum;
-      }
+      } // end omp for
     }
-  }
+  } // end omp paraççe
 }
 
 // Output matrix to stdout

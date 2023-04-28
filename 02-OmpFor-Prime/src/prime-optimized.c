@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -5,7 +6,32 @@
 
 #include <omp.h>
 
-static unsigned prime_default(const unsigned n);
+static bool *prime_sieve(const unsigned max) {
+  bool *prime = malloc((max + 1) * sizeof(bool));
+  assert(prime != NULL);
+
+  for (unsigned i = 0; i <= max; i++) {
+    prime[i] = true;
+  }
+
+  prime[0] = prime[1] = false;
+  for (unsigned i = 2; i <= max; i++) {
+    for (unsigned j = 2 * i; j <= max; j += i) {
+      prime[j] = false;
+    }
+  }
+  return prime;
+}
+
+static unsigned prime_default(const unsigned n, const bool prime[const n]) {
+  unsigned total = 0;
+  for (unsigned i = 0; i <= n; i++) {
+    if (prime[i]) {
+      total += 1;
+    }
+  }
+  return total;
+}
 
 // Read exponent 'N' from file
 static unsigned read_exponent(const char *filename) {
@@ -50,8 +76,9 @@ int main(const int argc, const char *const restrict argv[argc]) {
 
   double t = omp_get_wtime();
 
+  bool *prime = prime_sieve(n_hi);
   for (unsigned n = n_lo; n <= n_hi; n *= n_factor) {
-    unsigned primes = prime_default(n);
+    unsigned primes = prime_default(n, prime);
     printf("  %8u  %8u\n", n, primes);
   }
 
@@ -61,38 +88,7 @@ int main(const int argc, const char *const restrict argv[argc]) {
     Terminate.
   */
   fprintf(stderr, "%lf\n", t);
+  free(prime);
 
   return EXIT_SUCCESS;
-}
-
-/*
-  Purpose:
-   counts primes.
-  Licensing:
-    This code is distributed under the GNU LGPL license.
-  Modified:
-    10 July 2010
-  Author:
-    John Burkardt
-  Parameters:
-    Input, the maximum number to check.
-    Output, the number of prime numbers up to N.
-*/
-static unsigned prime_default(const unsigned n) {
-  unsigned total = 0;
-
-#pragma omp parallel for default(none) firstprivate(n) reduction(+ : total) schedule(dynamic)
-  for (unsigned i = 2; i <= n; i++) {
-    unsigned prime = 1;
-
-    for (unsigned j = 2; j < i; j++) {
-      if (i % j == 0) {
-        prime = 0;
-        break;
-      }
-    }
-    total += prime;
-  } // end omp parallel for
-
-  return total;
 }
