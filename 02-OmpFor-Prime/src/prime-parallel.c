@@ -48,16 +48,11 @@ int main(const int argc, const char *const restrict argv[argc]) {
   printf("         N     Pi(N)\n");
   printf("\n");
 
-  unsigned n = n_lo;
-
   double t = omp_get_wtime();
 
-  while (n <= n_hi) {
+  for (unsigned n = n_lo; n <= n_hi; n *= n_factor) {
     unsigned primes = prime_default(n);
-
     printf("  %8u  %8u\n", n, primes);
-
-    n = n * n_factor;
   }
 
   t = omp_get_wtime() - t;
@@ -86,6 +81,7 @@ int main(const int argc, const char *const restrict argv[argc]) {
 static unsigned prime_default(const unsigned n) {
   unsigned total = 0;
 
+#pragma omp parallel for firstprivate(n) reduction(+ : total) schedule(dynamic)
   for (unsigned i = 2; i <= n; i++) {
     unsigned prime = 1;
 
@@ -95,7 +91,7 @@ static unsigned prime_default(const unsigned n) {
         break;
       }
     }
-    total = total + prime;
+    total += prime;
   }
 
   return total;
