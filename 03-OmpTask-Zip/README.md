@@ -24,9 +24,9 @@ Tasks & Rules
 
 You should do the following tasks:
 
-- [ ] Understand the serial code in `src/zip-serial.c`
-- [ ] Parallelize the code using OpenMP Tasks in the file `src/zip-parallel.c`
-- [ ] Run both versions and compare them. Did you get any speedup?
+- [X] Understand the serial code in `src/zip-serial.c`
+- [X] Parallelize the code using OpenMP Tasks in the file `src/zip-parallel.c`
+- [X] Run both versions and compare them. Did you get any speedup? (4x speedup)
 
 You must **not** change the serial implementation, only the parallel one.
 
@@ -39,7 +39,7 @@ Your assignment will be evaluated in terms of:
 - Performance: your program runs faster than the serial implementation.
 
 In order to test your solution, you can use one of the inputs available inside
-the `tests/` directory. 
+the `tests/` directory.
 Your grade will be computed using an automated routine restricted to the
 instructors and TAs. This routine will be run after the assignment deadline,
 using the latest commit push to the branch `main` before the deadline. Your

@@ -85,13 +85,22 @@ int main(const int argc, const char *const restrict argv[argc]) {
 
   double t = omp_get_wtime();
 
-  // Parallelize this loop using tasks!
-  for (unsigned i = 0; i < max_password_value; i++) {
-    if (password_ok(filename, i)) {
-      printf("Password: %u\n", i);
-      break;
+// Parallelize this loop using tasks!
+#pragma omp parallel default(none) firstprivate(filename, max_password_value)
+#pragma omp single nowait
+  {
+    bool found = false;
+    for (unsigned i = 0; i < max_password_value; i++) {
+#pragma omp task default(none) firstprivate(filename, i)                       \
+    shared(found) if (!found)
+      {
+        if (!found && password_ok(filename, i)) {
+          found = true;
+          printf("Password: %u\n", i);
+        }
+      } // end omp task
     }
-  }
+  } // end omp parallel
 
   t = omp_get_wtime() - t;
   fprintf(stderr, "%lf\n", t);
