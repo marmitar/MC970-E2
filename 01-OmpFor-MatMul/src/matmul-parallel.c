@@ -29,20 +29,18 @@ static void initialize_matrices(const unsigned size,
 static void multiply(const unsigned size, const float a[restrict size * size],
                      const float b[restrict size * size],
                      float c[restrict size * size]) {
-#pragma omp parallel default(none) firstprivate(size, a, b) shared(c)
-  {
-    for (unsigned i = 0; i < size; ++i) {
-#pragma omp for private(i) schedule(static) nowait
-      for (unsigned j = 0; j < size; ++j) {
+#pragma omp parallel default(none) shared(size, a, b, c)
+  for (unsigned i = 0; i < size; ++i) {
+#pragma omp for simd schedule(static) nowait
+    for (unsigned j = 0; j < size; ++j) {
 
-        float sum = 0.0;
-        for (unsigned k = 0; k < size; ++k) {
-          sum = sum + a[i * size + k] * b[k * size + j];
-        }
-        c[i * size + j] = sum;
-      } // end omp for
-    }
-  } // end omp paraççe
+      float sum = 0.0;
+      for (unsigned k = 0; k < size; ++k) {
+        sum = sum + a[i * size + k] * b[k * size + j];
+      }
+      c[i * size + j] = sum;
+    } // end omp for
+  } // end omp parallel
 }
 
 // Output matrix to stdout
