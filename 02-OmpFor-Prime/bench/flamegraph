@@ -1,7 +1,0 @@
-#!/bin/bash
-
-sudo perf record -F 40000 -g -- build/parallel tests/5.in > /dev/null
-sudo perf script \
-    | stackcollapse-perf.pl --all \
-    | flamegraph.pl --width 1920 > flamegraph.svg
-sudo rm perf.data perf.data.old
