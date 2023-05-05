@@ -45,13 +45,35 @@ static matrix_t mul(matrix_t restrict a, matrix_t restrict b,
   return ret;
 }
 
+static matrix_t array_mul_rec(const unsigned size, const unsigned n,
+                              matrix_t restrict data[const n]) {
+  if (n <= 1) {
+    assert(n > 0);
+    return data[0];
+  }
+
+  matrix_t left = NULL, right = NULL;
+#pragma omp task untied default(none) firstprivate(size, n) shared(data, left) \
+    depend(out                                                                 \
+           : left)
+  left = array_mul_rec(size, n / 2, data);
+#pragma omp task untied default(none) firstprivate(size, n)                    \
+    shared(data, right) depend(out                                             \
+                               : right)
+  right = array_mul_rec(size, n - n / 2, &data[n / 2]);
+#pragma omp taskwait
+
+  return mul(left, right, size);
+}
+
 // Parallelise this function:
 static matrix_t array_mul(const unsigned n, matrix_t restrict data[const n],
                           const unsigned size) {
-  matrix_t ret = data[0];
-  for (unsigned i = 1; i < n; i++) {
-    ret = mul(ret, data[i], size);
-  }
+  matrix_t ret = NULL;
+#pragma omp parallel default(none) firstprivate(n, size) shared(data, ret)
+#pragma omp single nowait
+  ret = array_mul_rec(size, n, data);
+
   free((void *)data);
   return ret;
 }
