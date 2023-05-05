@@ -81,7 +81,7 @@ int main(const int argc, const char *const restrict argv[argc]) {
 static unsigned prime_default(const unsigned n) {
   unsigned total = 0;
 
-#pragma omp parallel for default(none) firstprivate(n) reduction(+ : total) schedule(dynamic)
+#pragma omp parallel for simd default(none) shared(n) reduction(+ : total) schedule(dynamic)
   for (unsigned i = 2; i <= n; i++) {
     unsigned prime = 1;
 
