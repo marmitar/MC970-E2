@@ -53,13 +53,9 @@ static matrix_t array_mul_rec(const unsigned size, const unsigned n,
   }
 
   matrix_t left = NULL, right = NULL;
-#pragma omp task untied default(none) firstprivate(size, n) shared(data, left) \
-    depend(out                                                                 \
-           : left)
+#pragma omp task default(none) shared(size, n, data, left) depend(out : left)
   left = array_mul_rec(size, n / 2, data);
-#pragma omp task untied default(none) firstprivate(size, n)                    \
-    shared(data, right) depend(out                                             \
-                               : right)
+#pragma omp task default(none) shared(size, n, data, right) depend(out : right)
   right = array_mul_rec(size, n - n / 2, &data[n / 2]);
 #pragma omp taskwait
 
@@ -70,7 +66,7 @@ static matrix_t array_mul_rec(const unsigned size, const unsigned n,
 static matrix_t array_mul(const unsigned n, matrix_t restrict data[const n],
                           const unsigned size) {
   matrix_t ret = NULL;
-#pragma omp parallel default(none) firstprivate(n, size) shared(data, ret)
+#pragma omp parallel default(none) shared(n, size, data, ret)
 #pragma omp single nowait
   ret = array_mul_rec(size, n, data);
 
