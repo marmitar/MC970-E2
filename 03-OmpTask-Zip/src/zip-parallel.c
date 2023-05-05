@@ -65,8 +65,27 @@ static bool password_ok(const char *const filename, const unsigned password) {
   return false;
 }
 
-int main(const int argc, const char *const restrict argv[argc]) {
+static void brute_force_password(const char *const filename) {
   const unsigned max_password_value = 500000;
+
+  // Parallelize this loop using tasks!
+#pragma omp parallel default(none) shared(filename, max_password_value)
+#pragma omp single nowait
+  {
+    bool found = false;
+#pragma omp taskgroup
+    for (unsigned i = 0; i < max_password_value; i++) {
+#pragma omp task default(none) shared(filename, i, found) if (!found)
+      if (!found && password_ok(filename, i)) {
+        found = true;
+        printf("Password: %u\n", i);
+#pragma omp cancel taskgroup
+      } // end omp task
+    } // end omp taskgroup
+  } // end omp parallel
+}
+
+int main(const int argc, const char *const restrict argv[argc]) {
 
   if (argc < 2) {
     fprintf(stderr, "Error: missing path to input file\n");
@@ -84,25 +103,9 @@ int main(const int argc, const char *const restrict argv[argc]) {
   omp_set_num_threads(nt);
 
   double t = omp_get_wtime();
-
-// Parallelize this loop using tasks!
-#pragma omp parallel default(none) firstprivate(filename, max_password_value)
-#pragma omp single nowait
-  {
-    bool found = false;
-    for (unsigned i = 0; i < max_password_value; i++) {
-#pragma omp task default(none) firstprivate(filename, i)                       \
-    shared(found) if (!found)
-      {
-        if (!found && password_ok(filename, i)) {
-          found = true;
-          printf("Password: %u\n", i);
-        }
-      } // end omp task
-    }
-  } // end omp parallel
-
+  brute_force_password(filename);
   t = omp_get_wtime() - t;
+
   fprintf(stderr, "%lf\n", t);
 
   return EXIT_SUCCESS;
